@@ -34,8 +34,8 @@ public class SftpAutoConfiguration {
             log.info( "Dynamic initalization of 'scope=prototype' bean for service - {}", service);
 
             System.setProperty("service.name", service);
-            LoadApplication.registerBean(context,service +"DB", DB.class);
-            LoadApplication.registerBean(context,service +"SFTP", SFTP.class);
+            //LoadApplication.registerBean(context,service +"DB", DB.class);
+            //LoadApplication.registerBean(context,service +"SFTP", SFTP.class);
 
             context.getBean(service +"DB", DB.class);
             context.getBean(service +"SFTP",SFTP.class);
@@ -45,7 +45,7 @@ public class SftpAutoConfiguration {
 
     }
 
-    @ConditionalOnProperty(name = "sftp.db.store.enabled", havingValue = "true", matchIfMissing = false)
+    //@ConditionalOnProperty(name = "sftp.db.store.enabled", havingValue = "true", matchIfMissing = false)
     class SFTPJdbcConfig {
 
         SFTPJdbcConfig() {
