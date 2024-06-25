@@ -3,6 +3,7 @@ package com.load.sftp;
 import com.jcraft.jsch.ChannelSftp;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,6 +29,7 @@ import org.springframework.messaging.MessageChannel;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.concurrent.ThreadPoolExecutor;
 
 @Slf4j
@@ -124,6 +126,7 @@ public abstract class AbstractSftpConfig implements InitializingBean {
 
         SftpInboundFileSynchronizer fileSynchronizer = new SftpInboundFileSynchronizer(sftpSessionFactory);
         fileSynchronizer.setRemoteDirectory(sftpInboundDirectory);
+       fileSynchronizer.setPreserveTimestamp(true);
         return fileSynchronizer;
     }
 
@@ -173,6 +176,8 @@ public abstract class AbstractSftpConfig implements InitializingBean {
             log.info("Moving file to outbound dir {} ", msg);
             sftpTemplate.rename(sftpInboundDirectory + msg.getHeaders().get("file_name"),
                     sftpOutboundDirectory + msg.getHeaders().get("file_name"));
+            FileUtils.deleteQuietly(Paths.get(sftpLocalDownloadedDirectory + msg.getHeaders().get("file_name")).toFile());
+
             log.info("Moved file to outbound dir {} ", msg);
 
         });
