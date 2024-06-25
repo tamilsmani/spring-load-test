@@ -2,10 +2,8 @@ package com.load;
 
 import com.load.sftp.EmbeddedSftpServer;
 import com.load.sftp.SFTPInMemoryConfig;
-import jakarta.annotation.PostConstruct;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -26,20 +24,29 @@ public class LoadApplication {
 
 		EmbeddedSftpServer embeddedSftpServer = context.getBean(EmbeddedSftpServer.class);
 
-		log.info("Stopping SFTP service....in 5 seconds.");
+		/*log.info("Stopping SFTP service....in 5 seconds.");
 		TimeUnit.SECONDS.sleep(5);
 		sftpInMemoryConfig.stopSftpPolling();
 
 		log.info("Start SFTP service....in 5 seconds.");
 		TimeUnit.SECONDS.sleep(5);
-		sftpInMemoryConfig.startSftpPolling();
+		sftpInMemoryConfig.startSftpPolling();*/
 
-		log.info("publishing the file in 10 seconds.....");
-		TimeUnit.SECONDS.sleep(10);
+		log.info("publishing files in 2 seconds .....");
+		TimeUnit.SECONDS.sleep(2);
+
+		embeddedSftpServer.copyFileToSFTPInboundDirectory("dummy.txt");
+		//TimeUnit.SECONDS.sleep(10);
 
 		//TimeUnit.SECONDS.sleep(5);
-		embeddedSftpServer.copyFileToSFTPInboundDirectory("dummy.txt");
+		//embeddedSftpServer.copyFileToSFTPInboundDirectory("dummy.txt");
+
 		TimeUnit.SECONDS.sleep(10);
+		log.info("publishing again in 2 seconds .....");
+
+		TimeUnit.SECONDS.sleep(2);
+		embeddedSftpServer.copyFileToSFTPInboundDirectory("dummy.txt");
+
 //		TimeUnit.SECONDS.sleep(10);
 	}
 
