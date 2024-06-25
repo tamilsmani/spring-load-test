@@ -24,13 +24,23 @@ public class LoadApplication {
 		ConfigurableApplicationContext context = SpringApplication.run(LoadApplication.class, args);
 		SFTPInMemoryConfig sftpInMemoryConfig = context.getBean(SFTPInMemoryConfig.class);
 
-		log.info("Stopping SFTP service....in 2 seconds.");
-		TimeUnit.SECONDS.sleep(2);
+		EmbeddedSftpServer embeddedSftpServer = context.getBean(EmbeddedSftpServer.class);
+
+		log.info("Stopping SFTP service....in 5 seconds.");
+		TimeUnit.SECONDS.sleep(5);
 		sftpInMemoryConfig.stopSftpPolling();
 
-		log.info("Start SFTP service....in 2 seconds.");
-		TimeUnit.SECONDS.sleep(2);
+		log.info("Start SFTP service....in 5 seconds.");
+		TimeUnit.SECONDS.sleep(5);
 		sftpInMemoryConfig.startSftpPolling();
+
+		log.info("publishing the file in 10 seconds.....");
+		TimeUnit.SECONDS.sleep(10);
+
+		//TimeUnit.SECONDS.sleep(5);
+		embeddedSftpServer.copyFileToSFTPInboundDirectory("dummy.txt");
+		TimeUnit.SECONDS.sleep(10);
+//		TimeUnit.SECONDS.sleep(10);
 	}
 
 }

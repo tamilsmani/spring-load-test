@@ -15,6 +15,7 @@ import org.springframework.integration.dsl.MessageChannels;
 import org.springframework.integration.dsl.PollerSpec;
 import org.springframework.integration.dsl.Pollers;
 import org.springframework.integration.dsl.context.IntegrationFlowContext;
+import org.springframework.integration.endpoint.SourcePollingChannelAdapter;
 import org.springframework.integration.file.filters.CompositeFileListFilter;
 import org.springframework.integration.file.filters.SimplePatternFileListFilter;
 import org.springframework.integration.file.remote.session.CachingSessionFactory;
@@ -91,6 +92,7 @@ public abstract class AbstractSftpConfig implements InitializingBean {
 
     SftpInboundFileSynchronizingMessageSource sftpInboundFileSyncMessageSource;
     IntegrationFlow flow;
+    IntegrationFlowContext.IntegrationFlowRegistration reg;
 
     public SessionFactory sftpSessionFactory() {
         DefaultSftpSessionFactory factory = new DefaultSftpSessionFactory(true);
@@ -147,20 +149,32 @@ public abstract class AbstractSftpConfig implements InitializingBean {
                 .maxMessagesPerPoll(maxFetchSize);
 
         flow = IntegrationFlow.
-                from(sftpInboundFileSyncMessageSource, e -> e.poller(pollerSpec))
+                from(sftpInboundFileSyncMessageSource, e -> e.poller(pollerSpec).id("sftpInboundChannelAdapter"))
                 .channel(MessageChannels.executor(threadPoolTaskExecutor()))
                 .channel(toInputChannel())
+                .channel(toOutputChannel())
                 //.handle(applicationContext.getBean(serviceName + "ProcessorService"), "processMessage")
                 .get();
 
-        integrationFlowContext.registration(flow).id("Flow").register();
+        reg = integrationFlowContext.registration(flow).register();
     }
 
     public MessageChannel toInputChannel() {
         DirectChannel channel = new DirectChannel();
         channel.subscribe(msg -> {
-
             log.info("Received file {} ", msg);
+        });
+        return channel;
+    }
+
+    public MessageChannel toOutputChannel() {
+        DirectChannel channel = new DirectChannel();
+        channel.subscribe(msg -> {
+            log.info("Moving file to outbound dir {} ", msg);
+            sftpTemplate.rename(sftpInboundDirectory + msg.getHeaders().get("file_name"),
+                    sftpOutboundDirectory + msg.getHeaders().get("file_name"));
+            log.info("Moved file to outbound dir {} ", msg);
+
         });
         return channel;
     }
@@ -177,18 +191,16 @@ public abstract class AbstractSftpConfig implements InitializingBean {
 
     public synchronized void startSftpPolling() {
         log.info("[SFTP]- Starting SFTP polling .... ");
-        sftpInboundFileSyncMessageSource.start();
+        applicationContext.getBean("sftpInboundChannelAdapter", SourcePollingChannelAdapter.class).start();
+
     }
 
     public synchronized void stopSftpPolling() {
         log.info("[SFTP]- Stopping SFTP polling ");
-        if (isSftpPollingInprogress())
-            sftpInboundFileSyncMessageSource.stop();
+        applicationContext.getBean("sftpInboundChannelAdapter", SourcePollingChannelAdapter.class).stop();
+        //reg.stop();
         log.info("[SFTP]-[{}] - Stopped  SFTP polling");
     }
 
-    public boolean isSftpPollingInprogress() {
-        return sftpInboundFileSyncMessageSource.isRunning();
-    }
 
 }
